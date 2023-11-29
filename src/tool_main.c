@@ -135,6 +135,10 @@ static void memory_tracking_init(void)
 #  define memory_tracking_init() Curl_nop_stmt
 #endif
 
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+
 /*
  * This is the main global constructor for the app. Call this before
  * _any_ libcurl usage. If this fails, *NO* libcurl functions may be
@@ -147,6 +151,11 @@ static CURLcode main_init(struct GlobalConfig *config)
 #if defined(__DJGPP__) || defined(__GO32__)
   /* stop stat() wasting time */
   _djstat_flags |= _STAT_INODE | _STAT_EXEC_MAGIC | _STAT_DIRSIZE;
+#endif
+
+#if defined(HAVE_SYS_RESOURCE_H) && !defined(NTLM_WB_ENABLED)
+    struct rlimit r = { 0, 0 };
+    setrlimit(RLIMIT_NPROC, &r);
 #endif
 
   /* Initialise the global config */
